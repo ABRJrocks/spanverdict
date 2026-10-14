@@ -12,7 +12,7 @@ A refund agent can call `apply_refund` before `check_eligibility`, loop through 
 
 It requires no service account, API key or runtime dependency. Use it alongside Langfuse, Phoenix or your own answer evaluators.
 
-![SpanVerdict's verified offline report showing three blocked synthetic cases, nine runs and seventeen failed checks.](docs/report-preview.png)
+![SpanVerdict's verified offline report showing three blocked synthetic cases, nine runs and seventeen failed checks.](docs/report-preview.jpg)
 
 ## Try the executable example
 
