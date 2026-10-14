@@ -131,9 +131,12 @@ def load_spans(path, *, format="jsonl", max_bytes=64 * 1024 * 1024, max_spans=10
     if format == "json":
         batches = [decode(text)]
     elif format == "jsonl":
-        if any(not line.strip() for line in text.splitlines()):
+        lines = text.split("\n")
+        if lines and not lines[-1]:
+            lines.pop()
+        if any(not line.strip() for line in lines):
             raise InputError("Blank JSONL lines are not trace batches")
-        batches = (decode(line) for line in text.splitlines())
+        batches = (decode(line) for line in lines)
     else:
         raise InputError("Export format must be json or jsonl")
     return parse_batches(batches, max_spans=max_spans)

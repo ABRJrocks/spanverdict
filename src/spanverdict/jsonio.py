@@ -1,6 +1,7 @@
 """Bounded input and unambiguous JSON for policies, exports and baselines."""
 
 import json
+import math
 from pathlib import Path
 
 
@@ -21,9 +22,16 @@ def _constant(value):
     raise InputError("Non-finite JSON number")
 
 
+def _float(value):
+    result = float(value)
+    if not math.isfinite(result):
+        raise InputError("Non-finite JSON number")
+    return result
+
+
 def decode(text):
     try:
-        return json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant)
+        return json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant, parse_float=_float)
     except (json.JSONDecodeError, RecursionError, ValueError) as exc:
         if isinstance(exc, InputError):
             raise
