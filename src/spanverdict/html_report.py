@@ -7,6 +7,7 @@ from . import __version__
 
 MESSAGES = {
     "budget_exceeded": "Run exceeded its metric budget",
+    "below_minimum": "Run did not record the required minimum activity",
     "missing_measurement": "Required usage measurement was not recorded",
     "tool_not_allowed": "Tool was outside the reviewed allow list",
     "required_tool_missing": "Required successful tool execution was missing",

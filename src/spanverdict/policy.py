@@ -36,13 +36,13 @@ def count(value, *, minimum=0, maximum=100_000):
 
 
 def number(value):
-    if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 10**18:
+    if type(value) not in (int, float) or not 0 <= value <= 10**18 or not math.isfinite(value):
         raise InputError("Policy measurement must be finite, nonnegative and bounded")
 
 
 def validate_policy(document):
     obj(document, {"version", "name", "cases", "min_runs_per_case", "root_operation",
-                   "model_operations", "limits", "tools", "order", "regressions"},
+                   "model_operations", "limits", "minimums", "tools", "order", "regressions"},
         {"version", "name", "cases"})
     if type(document["version"]) is not int or document["version"] != 1:
         raise InputError("Unsupported policy version")
@@ -57,12 +57,16 @@ def validate_policy(document):
     labels(result["model_operations"])
     if result["root_operation"] in result["model_operations"] or "execute_tool" in result["model_operations"]:
         raise InputError("Model operations cannot include the root or execute_tool")
-    result.setdefault("limits", {})
-    obj(result["limits"], METRICS)
-    for key, value in result["limits"].items():
-        number(value)
-        if key != "duration_ms":
-            count(value, maximum=10**18)
+    for field in ("limits", "minimums"):
+        result.setdefault(field, {})
+        obj(result[field], METRICS)
+        for key, value in result[field].items():
+            number(value)
+            if key != "duration_ms":
+                count(value, maximum=10**18)
+    for metric, minimum in result["minimums"].items():
+        if metric in result["limits"] and minimum > result["limits"][metric]:
+            raise InputError("Metric minimum exceeds maximum")
     result.setdefault("tools", {})
     obj(result["tools"], {"allow", "required", "max_calls"})
     tools = result["tools"]
@@ -100,7 +104,7 @@ def validate_policy(document):
         obj(allowance, {"relative", "absolute"}, {"relative", "absolute"})
         number(allowance["relative"])
         number(allowance["absolute"])
-    if not (result["limits"] or tools.get("allow") is not None or tools["required"]
+    if not (result["limits"] or result["minimums"] or tools.get("allow") is not None or tools["required"]
             or tools["max_calls"] or result["order"] or result["regressions"]):
         raise InputError("Policy must declare at least one behavioral or metric check")
     return result

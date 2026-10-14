@@ -11,10 +11,27 @@ def measure(run, model_operations):
     models = [span for span in run.spans if span.attrs.get(OP) in model_operations]
     tools = [span for span in run.spans if span.attrs.get(OP) == "execute_tool"]
     for span in run.spans:
+        if TOOL in span.attrs and span.attrs.get(OP) != "execute_tool":
+            raise InputError("Tool name on an unclassified operation")
         if (INPUT in span.attrs or OUTPUT in span.attrs) and span.attrs.get(OP) not in model_operations:
             raise InputError("Token usage on an unclassified operation; review model_operations")
     if any(TOOL not in span.attrs for span in tools):
         raise InputError("execute_tool span is missing gen_ai.tool.name")
+    model_ids = {span.span_id for span in models}
+    parents = {span.span_id: span.parent_id for span in run.spans}
+    under_model = {}
+    for span in run.spans:
+        path, parent = [], span.span_id
+        while parent and parent not in under_model:
+            path.append(parent)
+            parent = parents[parent]
+        inherited = under_model.get(parent, False)
+        for current in reversed(path):
+            if current in model_ids:
+                if inherited:
+                    raise InputError("Nested model spans would double count generation usage")
+                inherited = True
+            under_model[current] = inherited
     values = {"duration_ms": (run.root.end_ns - run.root.start_ns) / 1_000_000,
               "model_calls": len(models), "tool_calls": len(tools),
               "error_spans": sum(span.status == 2 for span in run.spans)}

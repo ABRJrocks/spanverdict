@@ -39,10 +39,10 @@ def validate_baseline(value, policy):
         obj(case["p95"], METRICS, METRICS)
         for metric, actual in case["p95"].items():
             if actual is None:
-                if metric in policy["regressions"] or metric in policy["limits"]:
+                if metric in policy["regressions"] or metric in policy["limits"] or metric in policy["minimums"]:
                     raise InputError("Baseline is missing a requested measurement")
                 continue
-            if type(actual) not in (int, float) or not math.isfinite(actual) or not 0 <= actual <= 10**30:
+            if type(actual) not in (int, float) or not 0 <= actual <= 10**30 or not math.isfinite(actual):
                 raise InputError("Invalid baseline measurement")
             if metric != "duration_ms" and type(actual) is not int:
                 raise InputError("Baseline counters must be integers")

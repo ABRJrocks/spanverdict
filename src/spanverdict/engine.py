@@ -14,13 +14,16 @@ from .policy import fingerprint, validate_policy
 
 def check_run(run, values, policy):
     issues = []
-    for metric in sorted(set(policy["limits"]) | set(policy["regressions"])):
+    for metric in sorted(set(policy["limits"]) | set(policy["minimums"]) | set(policy["regressions"])):
         maximum = policy["limits"].get(metric)
         actual = values[metric]
         if actual is None:
             issues.append({"code": "missing_measurement", "metric": metric})
         elif maximum is not None and actual > maximum:
             issues.append({"code": "budget_exceeded", "metric": metric, "actual": actual, "limit": maximum})
+        elif metric in policy["minimums"] and actual < policy["minimums"][metric]:
+            issues.append({"code": "below_minimum", "metric": metric, "actual": actual,
+                           "minimum": policy["minimums"][metric]})
     tools = [span for span in run.spans if span.attrs.get(OP) == "execute_tool"]
     calls = Counter(span.attrs[TOOL] for span in tools)
     successful = Counter(span.attrs[TOOL] for span in tools if span.status == 1)

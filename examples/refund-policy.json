@@ -3,6 +3,7 @@
   "name": "refund-agent-release",
   "cases": ["refund-standard", "refund-partial", "refund-escalated"],
   "min_runs_per_case": 3,
+  "minimums": {"model_calls": 1},
   "limits": {
     "duration_ms": 150,
     "input_tokens": 1000,
