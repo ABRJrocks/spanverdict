@@ -1,6 +1,9 @@
 """Evaluate complete case coverage and per-run execution contracts."""
 
 from collections import Counter, defaultdict
+from dataclasses import asdict
+import hashlib
+import json
 
 from .graph import build_runs
 from .metrics import measure, summarize
@@ -11,11 +14,12 @@ from .policy import fingerprint, validate_policy
 
 def check_run(run, values, policy):
     issues = []
-    for metric, maximum in sorted(policy["limits"].items()):
+    for metric in sorted(set(policy["limits"]) | set(policy["regressions"])):
+        maximum = policy["limits"].get(metric)
         actual = values[metric]
         if actual is None:
             issues.append({"code": "missing_measurement", "metric": metric})
-        elif actual > maximum:
+        elif maximum is not None and actual > maximum:
             issues.append({"code": "budget_exceeded", "metric": metric, "actual": actual, "limit": maximum})
     tools = [span for span in run.spans if span.attrs.get(OP) == "execute_tool"]
     calls = Counter(span.attrs[TOOL] for span in tools)
@@ -37,7 +41,7 @@ def check_run(run, values, policy):
     return issues + check_order(run, policy["order"])
 
 
-def evaluate(policy, spans):
+def assess_runs(policy, spans):
     policy = validate_policy(policy)
     runs = build_runs(spans, root_operation=policy["root_operation"])
     grouped = defaultdict(list)
@@ -59,6 +63,21 @@ def evaluate(policy, spans):
                       "issues": issues})
     result = {"version": 1, "measurement_version": 1, "name": policy["name"],
               "policy_sha256": fingerprint(policy), "cases": cases}
+    projection = [asdict(span) for span in sorted(spans, key=lambda s: (s.trace_id, s.span_id))]
+    result["evidence_sha256"] = hashlib.sha256(json.dumps(
+        projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return finalize(result)
+
+
+def evaluate(policy, spans, *, baseline=None):
+    from .baseline import compare
+    policy = validate_policy(policy)
+    result = assess_runs(policy, spans)
+    if policy["regressions"] and baseline is None:
+        from .jsonio import InputError
+        raise InputError("Regression policy requires a reviewed baseline")
+    if baseline is not None:
+        compare(result, policy, baseline)
     return finalize(result)
 
 
