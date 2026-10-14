@@ -1,0 +1,5 @@
+include LICENSE README.md SECURITY.md CONTRIBUTING.md CHANGELOG.md PRIVACY.md action.yml requirements-integration.txt
+recursive-include docs *.md *.png
+recursive-include examples *.py *.json *.jsonl
+recursive-include tests *.py
+recursive-include tests_integration *.py
