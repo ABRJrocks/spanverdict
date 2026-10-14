@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from .graph import build_runs
 from .metrics import measure, summarize
 from .otlp import OP, TOOL
+from .ordering import check_order
 from .policy import fingerprint, validate_policy
 
 
@@ -33,7 +34,7 @@ def check_run(run, values, policy):
         if calls[name] > maximum:
             issues.append({"code": "tool_calls_exceeded", "tool": name,
                            "actual": calls[name], "limit": maximum})
-    return issues
+    return issues + check_order(run, policy["order"])
 
 
 def evaluate(policy, spans):
