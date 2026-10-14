@@ -1,0 +1,41 @@
+{
+  "cases": {
+    "refund-escalated": {
+      "p95": {
+        "duration_ms": 96.0,
+        "error_spans": 0,
+        "input_tokens": 320,
+        "model_calls": 1,
+        "output_tokens": 60,
+        "tool_calls": 3
+      },
+      "runs": 3
+    },
+    "refund-partial": {
+      "p95": {
+        "duration_ms": 96.0,
+        "error_spans": 0,
+        "input_tokens": 320,
+        "model_calls": 1,
+        "output_tokens": 60,
+        "tool_calls": 3
+      },
+      "runs": 3
+    },
+    "refund-standard": {
+      "p95": {
+        "duration_ms": 96.0,
+        "error_spans": 0,
+        "input_tokens": 320,
+        "model_calls": 1,
+        "output_tokens": 60,
+        "tool_calls": 3
+      },
+      "runs": 3
+    }
+  },
+  "evidence_sha256": "b2961a0be222904086aa283af38607ae01fdaf2529b9905faa920d3f44850a0c",
+  "measurement_version": 1,
+  "policy_sha256": "63e6dd2627da60a3e8d7f41f5ff8df5b6bd3c0aaeba44aafc6d5042dce67edc0",
+  "version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "name": "refund-agent-release",
+  "cases": ["refund-standard", "refund-partial", "refund-escalated"],
+  "min_runs_per_case": 3,
+  "limits": {
+    "duration_ms": 150,
+    "input_tokens": 1000,
+    "output_tokens": 300,
+    "model_calls": 2,
+    "tool_calls": 4,
+    "error_spans": 0
+  },
+  "tools": {
+    "allow": ["lookup_customer", "check_eligibility", "apply_refund", "escalate_case"],
+    "required": {"lookup_customer": 1, "check_eligibility": 1},
+    "max_calls": {"apply_refund": 1}
+  },
+  "order": [
+    {"before": "lookup_customer", "after": "check_eligibility", "same_parent": true},
+    {"before": "check_eligibility", "after": "apply_refund", "same_parent": true}
+  ],
+  "regressions": {
+    "duration_ms": {"relative": 0.2, "absolute": 10},
+    "input_tokens": {"relative": 0.1, "absolute": 20},
+    "model_calls": {"relative": 0, "absolute": 0}
+  }
+}
