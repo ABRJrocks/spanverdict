@@ -1,0 +1,46 @@
+name: SpanVerdict
+author: Abdul Rafay
+description: Check recorded agent traces for tool-order violations, missing telemetry, token budgets and per-case regressions.
+branding:
+  icon: activity
+  color: gray-dark
+inputs:
+  policy:
+    description: Reviewed policy JSON path in the caller workspace.
+    required: true
+  traces:
+    description: Candidate OTLP JSON or JSONL export path in the caller workspace.
+    required: true
+  baseline:
+    description: Reviewed baseline JSON path. Required when the policy selects regressions.
+    required: false
+    default: ''
+  format:
+    description: Export format, jsonl or json.
+    default: jsonl
+  report-prefix:
+    description: Prefix for JSON, JUnit XML and self-contained HTML reports.
+    default: reports/spanverdict
+runs:
+  using: composite
+  steps:
+    - name: Check recorded agent execution
+      shell: bash
+      env:
+        SPANVERDICT_POLICY: ${{ inputs.policy }}
+        SPANVERDICT_TRACES: ${{ inputs.traces }}
+        SPANVERDICT_BASELINE: ${{ inputs.baseline }}
+        SPANVERDICT_FORMAT: ${{ inputs.format }}
+        SPANVERDICT_REPORT_PREFIX: ${{ inputs.report-prefix }}
+      run: |
+        python -c 'import sys; assert sys.version_info >= (3, 10), "SpanVerdict requires Python 3.10+"'
+        baseline_args=()
+        if [[ -n "$SPANVERDICT_BASELINE" ]]; then
+          baseline_args=(--baseline "$SPANVERDICT_BASELINE")
+        fi
+        PYTHONPATH="$GITHUB_ACTION_PATH/src${PYTHONPATH:+:$PYTHONPATH}" python -m spanverdict check \
+          "$SPANVERDICT_POLICY" "$SPANVERDICT_TRACES" \
+          --format "$SPANVERDICT_FORMAT" "${baseline_args[@]}" \
+          --json-report "${SPANVERDICT_REPORT_PREFIX}.json" \
+          --junit "${SPANVERDICT_REPORT_PREFIX}.xml" \
+          --html-report "${SPANVERDICT_REPORT_PREFIX}.html"
